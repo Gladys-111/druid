@@ -425,7 +425,7 @@ public class PGOutputVisitor extends SQLASTOutputVisitor implements PGASTVisitor
 
     @Override
     public boolean visit(PGExtractExpr x) {
-        print0(ucase ? "EXTRACT (" : "extract (");
+        print0(ucase ? "EXTRACT(" : "extract(");
         print0(x.getField().name());
         print0(ucase ? " FROM " : " from ");
         x.getSource().accept(this);
@@ -1406,8 +1406,8 @@ public class PGOutputVisitor extends SQLASTOutputVisitor implements PGASTVisitor
         println();
         print0(ucase ? "FROM " : "from ");
         if (x.getFrom() != null) {
-            if (x.getCommentsAfaterFrom() != null) {
-                printAfterComments(x.getCommentsAfaterFrom());
+            if (x.getCommentsAfterFrom() != null) {
+                printAfterComments(x.getCommentsAfterFrom());
                 println();
             }
             x.getFrom().accept(this);
@@ -2879,5 +2879,16 @@ public class PGOutputVisitor extends SQLASTOutputVisitor implements PGASTVisitor
 
     protected boolean legacyCube() {
         return true;
+    }
+
+    protected void printTableOption(SQLExpr name, SQLExpr value, int index) {
+        if (index != 0) {
+            print(",");
+            println();
+        }
+        String key = name.toString();
+        print0(key);
+        print0(" = ");
+        value.accept(this);
     }
 }

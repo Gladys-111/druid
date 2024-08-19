@@ -58,6 +58,10 @@ public class StarRocksCreateTableParser extends SQLCreateTableParser {
             createTable.setDimension(true);
         }
 
+        if (lexer.identifierEquals(FnvHash.Constants.TEMPORARY)) {
+            lexer.nextToken();
+            createTable.setTemporary(true);
+        }
         accept(Token.TABLE);
 
         if (lexer.token() == Token.IF || lexer.identifierEquals("IF")) {
@@ -153,12 +157,6 @@ public class StarRocksCreateTableParser extends SQLCreateTableParser {
             }
         }
 
-        if (lexer.token() == Token.AS) {
-            lexer.nextToken();
-            SQLSelect select = this.createSQLSelectParser().select();
-            createTable.setSelect(select);
-        }
-
         if (lexer.token() == Token.WITH) {
             lexer.nextToken();
             accept(Token.LPAREN);
@@ -190,7 +188,7 @@ public class StarRocksCreateTableParser extends SQLCreateTableParser {
             if (lexer.token() == Token.EQ) {
                 lexer.nextToken();
             }
-            stmt.setEngine(
+            srStmt.setEngine(
                     this.exprParser.expr()
             );
         }
@@ -344,6 +342,12 @@ public class StarRocksCreateTableParser extends SQLCreateTableParser {
                     break;
                 }
             }
+        }
+
+        if (lexer.token() == Token.AS) {
+            lexer.nextToken();
+            SQLSelect select = this.createSQLSelectParser().select();
+            srStmt.setSelect(select);
         }
     }
 

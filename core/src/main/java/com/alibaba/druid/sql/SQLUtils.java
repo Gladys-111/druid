@@ -29,11 +29,10 @@ import com.alibaba.druid.sql.dialect.h2.visitor.H2OutputVisitor;
 import com.alibaba.druid.sql.dialect.h2.visitor.H2SchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.hive.ast.HiveInsert;
 import com.alibaba.druid.sql.dialect.hive.ast.HiveInsertStatement;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateTableStatement;
 import com.alibaba.druid.sql.dialect.hive.visitor.HiveASTVisitorAdapter;
 import com.alibaba.druid.sql.dialect.hive.visitor.HiveOutputVisitor;
 import com.alibaba.druid.sql.dialect.hive.visitor.HiveSchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.holo.visitor.HoloOutputVisitor;
+import com.alibaba.druid.sql.dialect.hologres.visitor.HologresOutputVisitor;
 import com.alibaba.druid.sql.dialect.impala.visitor.ImpalaOutputVisitor;
 import com.alibaba.druid.sql.dialect.infomix.visitor.InformixOutputVisitor;
 import com.alibaba.druid.sql.dialect.mysql.ast.MySqlObject;
@@ -60,6 +59,7 @@ import com.alibaba.druid.sql.dialect.oscar.visitor.OscarOutputVisitor;
 import com.alibaba.druid.sql.dialect.postgresql.visitor.PGOutputVisitor;
 import com.alibaba.druid.sql.dialect.postgresql.visitor.PGSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.presto.visitor.PrestoOutputVisitor;
+import com.alibaba.druid.sql.dialect.redshift.visitor.RedshiftOutputVisitor;
 import com.alibaba.druid.sql.dialect.spark.visitor.SparkOutputVisitor;
 import com.alibaba.druid.sql.dialect.spark.visitor.SparkSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.sqlserver.visitor.SQLServerOutputVisitor;
@@ -527,7 +527,9 @@ public class SQLUtils {
             case edb:
                 return new PGOutputVisitor(out);
             case hologres:
-                return new HoloOutputVisitor(out);
+                return new HologresOutputVisitor(out);
+            case redshift:
+                return new RedshiftOutputVisitor(out);
             case sqlserver:
             case jtds:
                 return new SQLServerOutputVisitor(out);
@@ -1573,11 +1575,6 @@ public class SQLUtils {
                     }
 
                     @Override
-                    public boolean visit(HiveCreateTableStatement x) {
-                        return false;
-                    }
-
-                    @Override
                     public boolean visit(OdpsCreateTableStatement x) {
                         return false;
                     }
@@ -1626,11 +1623,6 @@ public class SQLUtils {
 
                     @Override
                     public boolean visit(SQLCreateTableStatement x) {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean visit(HiveCreateTableStatement x) {
                         return false;
                     }
 
@@ -2037,6 +2029,12 @@ public class SQLUtils {
         SQLObject parent = cmp.getParent();
         if (parent instanceof SQLSelectStatement) {
             ((SQLSelectStatement) parent).setSelect(dest);
+            return true;
+        } else if (parent instanceof SQLSubqueryTableSource) {
+            ((SQLSubqueryTableSource) parent).setSelect(dest);
+            return true;
+        } else if (parent instanceof SQLInsertStatement) {
+            ((SQLInsertStatement) parent).setQuery(dest);
             return true;
         }
         return false;
