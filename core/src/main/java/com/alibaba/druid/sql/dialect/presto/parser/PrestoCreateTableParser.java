@@ -58,9 +58,23 @@ public class PrestoCreateTableParser extends SQLCreateTableParser {
         }
 
         accept(Token.CREATE);
-
         accept(Token.TABLE);
+        createTableBeforeName(createTable);
+        createTable.setName(this.exprParser.name());
+        createTableBody(createTable);
+        createTableQueryBefore(createTable);
+        createTableQuery(createTable);
+        parseCreateTableRest(createTable);
 
+        return createTable;
+    }
+
+    protected PrestoCreateTableStatement newCreateStatement() {
+        return new PrestoCreateTableStatement();
+    }
+
+    @Override
+    protected void createTableBeforeName(SQLCreateTableStatement createTable) {
         if (lexer.token() == Token.IF || lexer.identifierEquals(FnvHash.Constants.IF)) {
             lexer.nextToken();
             accept(Token.NOT);
@@ -68,15 +82,34 @@ public class PrestoCreateTableParser extends SQLCreateTableParser {
 
             createTable.setIfNotExists(true);
         }
+    }
 
-        createTable.setName(this.exprParser.name());
-
+    @Override
+    protected void createTableBody(SQLCreateTableStatement createTable) {
         if (lexer.token() == Token.LPAREN) {
             lexer.nextToken();
 
             for (; ; ) {
                 Token token = lexer.token();
-                if (lexer.token() == Token.LIKE) {
+                if (token == Token.IDENTIFIER
+                        || token == Token.LITERAL_ALIAS) {
+                    SQLColumnDefinition column = this.exprParser.parseColumn(createTable);
+                    column.setParent(createTable);
+                    createTable.getTableElementList().add(column);
+
+                    if (lexer.token() == Token.COMMENT) {
+                        lexer.nextToken();
+                        SQLExpr comment = this.exprParser.expr();
+                        createTable.setComment(comment);
+                    }
+
+                    if (lexer.token() == Token.WITH) {
+                        lexer.nextToken();
+                        accept(Token.LPAREN);
+                        parseAssignItems(createTable.getTableOptions(), createTable, false);
+                        accept(Token.RPAREN);
+                    }
+                } else if (lexer.token() == Token.LIKE) {
                     lexer.nextToken();
                     SQLTableLike tableLike = new SQLTableLike();
                     tableLike.setTable(new SQLExprTableSource(this.exprParser.name()));
@@ -92,11 +125,12 @@ public class PrestoCreateTableParser extends SQLCreateTableParser {
                         acceptIdentifier("PROPERTIES");
                         tableLike.setExcludeProperties(true);
                     }
-                } else if (token == Token.IDENTIFIER //
-                        || token == Token.LITERAL_ALIAS) {
-                    SQLColumnDefinition column = this.exprParser.parseColumn(createTable);
-                    column.setParent(createTable);
-                    createTable.getTableElementList().add(column);
+                } else if (token == Token.PRIMARY
+                        || token == Token.UNIQUE
+                        || token == Token.CONSTRAINT) {
+                    SQLConstraint constraint = this.exprParser.parseConstaint();
+                    constraint.setParent(createTable);
+                    createTable.getTableElementList().add((SQLTableElement) constraint);
                 } else {
                     SQLColumnDefinition column = this.exprParser.parseColumn();
                     createTable.getTableElementList().add(column);
@@ -105,7 +139,7 @@ public class PrestoCreateTableParser extends SQLCreateTableParser {
                 if (lexer.token() == Token.COMMA) {
                     lexer.nextToken();
 
-                    if (lexer.token() == Token.RPAREN) { // compatible for sql server
+                    if (lexer.token() == Token.RPAREN) {
                         break;
                     }
                     continue;
@@ -116,7 +150,9 @@ public class PrestoCreateTableParser extends SQLCreateTableParser {
 
             accept(Token.RPAREN);
         }
+    }
 
+    protected void createTableQueryBefore(SQLCreateTableStatement createTable) {
         if (lexer.token() == Token.COMMENT) {
             lexer.nextToken();
             SQLExpr comment = this.exprParser.expr();
@@ -129,19 +165,14 @@ public class PrestoCreateTableParser extends SQLCreateTableParser {
             parseAssignItems(createTable.getTableOptions(), createTable, false);
             accept(Token.RPAREN);
         }
+    }
 
+    @Override
+    protected void createTableQuery(SQLCreateTableStatement createTable) {
         if (lexer.token() == Token.AS) {
             lexer.nextToken();
             SQLSelect select = this.createSQLSelectParser().select();
             createTable.setSelect(select);
         }
-
-        parseCreateTableRest(createTable);
-
-        return createTable;
-    }
-
-    protected PrestoCreateTableStatement newCreateStatement() {
-        return new PrestoCreateTableStatement();
     }
 }
