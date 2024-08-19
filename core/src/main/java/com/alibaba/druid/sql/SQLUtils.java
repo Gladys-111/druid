@@ -25,6 +25,7 @@ import com.alibaba.druid.sql.dialect.clickhouse.visitor.CKOutputVisitor;
 import com.alibaba.druid.sql.dialect.clickhouse.visitor.CKStatVisitor;
 import com.alibaba.druid.sql.dialect.db2.visitor.DB2OutputVisitor;
 import com.alibaba.druid.sql.dialect.db2.visitor.DB2SchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.gaussdb.visitor.GaussDbOutputVisitor;
 import com.alibaba.druid.sql.dialect.h2.visitor.H2OutputVisitor;
 import com.alibaba.druid.sql.dialect.h2.visitor.H2SchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.hive.ast.HiveInsert;
@@ -528,6 +529,8 @@ public class SQLUtils {
                 return new PGOutputVisitor(out);
             case hologres:
                 return new HologresOutputVisitor(out);
+            case gaussdb:
+                return new GaussDbOutputVisitor(out);
             case redshift:
                 return new RedshiftOutputVisitor(out);
             case sqlserver:
