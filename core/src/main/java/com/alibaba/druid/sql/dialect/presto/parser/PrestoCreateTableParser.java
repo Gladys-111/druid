@@ -17,6 +17,7 @@ package com.alibaba.druid.sql.dialect.presto.parser;
 
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.statement.*;
+import com.alibaba.druid.sql.dialect.presto.ast.PrestoColumnWith;
 import com.alibaba.druid.sql.dialect.presto.ast.stmt.PrestoCreateTableStatement;
 import com.alibaba.druid.sql.parser.SQLCreateTableParser;
 import com.alibaba.druid.sql.parser.SQLExprParser;
@@ -100,14 +101,16 @@ public class PrestoCreateTableParser extends SQLCreateTableParser {
                     if (lexer.token() == Token.COMMENT) {
                         lexer.nextToken();
                         SQLExpr comment = this.exprParser.expr();
-                        createTable.setComment(comment);
+                        column.setComment(comment);
                     }
 
                     if (lexer.token() == Token.WITH) {
                         lexer.nextToken();
+                        PrestoColumnWith prestoColumnWith = new PrestoColumnWith();
                         accept(Token.LPAREN);
-                        parseAssignItems(createTable.getTableOptions(), createTable, false);
+                        parseAssignItems(prestoColumnWith.getProperties(), prestoColumnWith, false);
                         accept(Token.RPAREN);
+                        column.addConstraint(prestoColumnWith);
                     }
                 } else if (lexer.token() == Token.LIKE) {
                     lexer.nextToken();
