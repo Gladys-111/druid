@@ -18,9 +18,6 @@ public class GaussDbPartitionValue extends SQLPartitionValue {
     }
 
     public void setSpaceName(SQLExpr spaceName) {
-        if (spaceName != null) {
-            spaceName.setParent(this);
-        }
         this.spaceName = spaceName;
     }
 
@@ -29,9 +26,6 @@ public class GaussDbPartitionValue extends SQLPartitionValue {
     }
 
     public void setDataNodes(SQLExpr dataNode) {
-        if (dataNode != null) {
-            dataNode.setParent(this);
-        }
         this.dataNode = dataNode;
     }
 
@@ -40,9 +34,6 @@ public class GaussDbPartitionValue extends SQLPartitionValue {
     }
 
     public void setStart(SQLExpr start) {
-        if (start != null) {
-            start.setParent(this);
-        }
         this.start = start;
     }
 
@@ -51,9 +42,6 @@ public class GaussDbPartitionValue extends SQLPartitionValue {
     }
 
     public void setEnd(SQLExpr end) {
-        if (end != null) {
-            end.setParent(this);
-        }
         this.end = end;
     }
 
@@ -62,9 +50,6 @@ public class GaussDbPartitionValue extends SQLPartitionValue {
     }
 
     public void setEvery(SQLExpr every) {
-        if (every != null) {
-            every.setParent(this);
-        }
         this.every = every;
     }
 
@@ -83,11 +68,7 @@ public class GaussDbPartitionValue extends SQLPartitionValue {
     @Override
     public void accept0(SQLASTVisitor visitor) {
         if (visitor.visit(this)) {
-            acceptChild(visitor, start);
-            acceptChild(visitor, end);
-            acceptChild(visitor, every);
-            acceptChild(visitor, spaceName);
-            acceptChild(visitor, dataNode);
+     //       acceptChild(visitor, columns);
             visitor.endVisit(this);
         }
     }

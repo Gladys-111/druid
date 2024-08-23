@@ -2,6 +2,8 @@ package com.alibaba.druid.sql.dialect.gaussdb.visitor;
 
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.ast.*;
+import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
+import com.alibaba.druid.sql.ast.statement.SQLAssignItem;
 import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
 import com.alibaba.druid.sql.ast.statement.SQLCreateTableStatement;
 import com.alibaba.druid.sql.dialect.gaussdb.ast.GaussDbCreateTableStatement;
@@ -9,6 +11,7 @@ import com.alibaba.druid.sql.dialect.gaussdb.ast.GaussDbDistributeBy;
 import com.alibaba.druid.sql.dialect.gaussdb.ast.GaussDbPartitionValue;
 import com.alibaba.druid.sql.visitor.SQLASTOutputVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GaussDbOutputVisitor extends SQLASTOutputVisitor implements GaussDbASTVisitor {
@@ -42,21 +45,15 @@ public class GaussDbOutputVisitor extends SQLASTOutputVisitor implements GaussDb
 
         printTableElements(x.getTableElementList());
 
-        printComment(x.getComment());
-
-        printAutoIncrement(x.getAutoIncrement());
-
-        printCharSet(x.getCharset());
-
-        printCollate(x.getCollate());
+        printTableOptions(x);
 
         printEngine(x);
-
-        printTableOptions(x);
 
         if (x.getDistributeBy() != null) {
             printDistributeBy(x.getDistributeBy());
         }
+
+        printComment(x.getComment());
 
         printPartitionedBy(x);
 
@@ -88,12 +85,39 @@ public class GaussDbOutputVisitor extends SQLASTOutputVisitor implements GaussDb
         return false;
     }
 
-    @Override
-    protected void printTableOptionsPrefix(SQLCreateTableStatement x) {
-        println();
-        print0(ucase ? "WITH (" : "with (");
-        incrementIndent();
-        println();
+    protected void printTableOptions(SQLCreateTableStatement x) {
+        List<SQLAssignItem> tblProperties = x.getTableOptions();
+        if (tblProperties.isEmpty()) {
+            return;
+        }
+        List<SQLAssignItem> storageProperties = new ArrayList<>();
+     //   printTableOptionsPrefix(x);
+
+        for (SQLAssignItem property : tblProperties) {
+            if (property.getTarget() instanceof SQLIdentifierExpr) {
+                String optionName = ((SQLIdentifierExpr) property.getTarget()).getName();
+                if (optionName.equals("AUTO_INCREMENT") || optionName.equals("CHARSET")
+                || optionName.equals("COLLATE") || optionName.equals("COMMENT")) {
+                    println();
+                    property.getTarget().accept(this);
+                    print0(" = ");
+                    property.getValue().accept(this);
+                } else {
+                    storageProperties.add(property);
+                }
+            } else {
+                storageProperties.add(property);
+            }
+        }
+        int j = 0;
+        if (!storageProperties.isEmpty()) {
+            printTableOptionsPrefix(x);
+            for (SQLAssignItem storageProperty : storageProperties) {
+                printTableOption(storageProperty.getTarget(), storageProperty.getValue(), j);
+                ++j;
+            }
+            printTableOptionsPostfix(x);
+        }
     }
 
     @Override
@@ -109,43 +133,6 @@ public class GaussDbOutputVisitor extends SQLASTOutputVisitor implements GaussDb
     }
 
     @Override
-    protected void printComment(SQLExpr comment) {
-        if (comment == null) {
-            return;
-        }
-        println();
-        print0(ucase ? "COMMENT = " : "comment = ");
-        comment.accept(this);
-    }
-
-    protected void printAutoIncrement(SQLExpr autoIncrement) {
-        if (autoIncrement == null) {
-            return;
-        }
-        println();
-        print0(ucase ? "AUTO_INCREMENT = " : "auto_increment = ");
-        autoIncrement.accept(this);
-    }
-
-    protected void printCharSet(SQLExpr charset) {
-        if (charset == null) {
-            return;
-        }
-        println();
-        print0(ucase ? "CHARSET = " : "charset = ");
-        charset.accept(this);
-    }
-
-    protected void printCollate(SQLExpr collate) {
-        if (collate == null) {
-            return;
-        }
-        println();
-        print0(ucase ? "COLLATE = " : "collate = ");
-        collate.accept(this);
-    }
-
-    @Override
     protected void printPartitionedBy(SQLCreateTableStatement x) {
         if (x instanceof GaussDbCreateTableStatement) {
             SQLPartitionBy partitionBy = ((GaussDbCreateTableStatement) x).getPartitionBy();
@@ -156,6 +143,7 @@ public class GaussDbOutputVisitor extends SQLASTOutputVisitor implements GaussDb
             print0(ucase ? "PARTITION BY " : "partition by ");
             partitionBy.accept(this);
         }
+
     }
 
     @Override
@@ -175,10 +163,8 @@ public class GaussDbOutputVisitor extends SQLASTOutputVisitor implements GaussDb
                 }
                 print(")");
             } else if (x.getOperator() == SQLPartitionValue.Operator.StartEndEvery) {
-                if (x.getStart() != null) {
-                    print0(ucase ? " START " : " start ");
-                    x.getStart().accept(this);
-                }
+                print0(ucase ? "START " : "start ");
+                x.getStart().accept(this);
                 if (x.getEnd() != null) {
                     print0(ucase ? " END " : " end ");
                     x.getEnd().accept(this);
@@ -228,8 +214,10 @@ public class GaussDbOutputVisitor extends SQLASTOutputVisitor implements GaussDb
     }
 
     public void printColumns(List<SQLExpr> columns) {
+        boolean isColumns = true;
         for (SQLExpr column : columns) {
             if (!(column instanceof SQLName)) {
+                isColumns = false;
                 break;
             }
         }

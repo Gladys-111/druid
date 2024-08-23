@@ -33,11 +33,6 @@ import com.alibaba.druid.sql.dialect.db2.ast.stmt.DB2SelectQueryBlock;
 import com.alibaba.druid.sql.dialect.db2.parser.DB2ExprParser;
 import com.alibaba.druid.sql.dialect.db2.parser.DB2Lexer;
 import com.alibaba.druid.sql.dialect.db2.parser.DB2StatementParser;
-import com.alibaba.druid.sql.dialect.doris.parser.DorisExprParser;
-import com.alibaba.druid.sql.dialect.doris.parser.DorisLexer;
-import com.alibaba.druid.sql.dialect.doris.parser.DorisStatementParser;
-import com.alibaba.druid.sql.dialect.gaussdb.parser.GaussDbExprParser;
-import com.alibaba.druid.sql.dialect.gaussdb.parser.GaussDbLexer;
 import com.alibaba.druid.sql.dialect.gaussdb.parser.GaussDbStatementParser;
 import com.alibaba.druid.sql.dialect.h2.parser.H2ExprParser;
 import com.alibaba.druid.sql.dialect.h2.parser.H2Lexer;
@@ -73,7 +68,6 @@ import com.alibaba.druid.sql.dialect.phoenix.parser.PhoenixStatementParser;
 import com.alibaba.druid.sql.dialect.postgresql.ast.stmt.PGSelectQueryBlock;
 import com.alibaba.druid.sql.dialect.postgresql.parser.PGExprParser;
 import com.alibaba.druid.sql.dialect.postgresql.parser.PGLexer;
-import com.alibaba.druid.sql.dialect.postgresql.parser.PGSQLStatementParser;
 import com.alibaba.druid.sql.dialect.presto.parser.PrestoExprParser;
 import com.alibaba.druid.sql.dialect.presto.parser.PrestoLexer;
 import com.alibaba.druid.sql.dialect.presto.parser.PrestoStatementParser;
@@ -151,7 +145,6 @@ public class SQLParserUtils {
             case postgresql:
             case greenplum:
             case edb:
-                return new PGSQLStatementParser(sql, features);
             case gaussdb:
                 return new GaussDbStatementParser(sql, features);
             case hologres:
@@ -162,7 +155,6 @@ public class SQLParserUtils {
             case jtds:
                 return new SQLServerStatementParser(sql, features);
             case h2:
-            case lealone:
                 return new H2StatementParser(sql, features);
             case blink:
                 return new BlinkStatementParser(sql, features);
@@ -189,8 +181,6 @@ public class SQLParserUtils {
                 return new InformixStatementParser(sql, features);
             case impala:
                 return new ImpalaStatementParser(sql, features);
-            case doris:
-                return new DorisStatementParser(sql, features);
             default:
                 return new SQLStatementParser(sql, dbType, features);
         }
@@ -213,14 +203,12 @@ public class SQLParserUtils {
                 return parser;
             }
             case h2:
-            case lealone:
                 return new H2ExprParser(sql, features);
             case postgresql:
             case greenplum:
             case edb:
-                return new PGExprParser(sql, features);
             case gaussdb:
-                return new GaussDbExprParser(sql, features);
+                return new PGExprParser(sql, features);
             case hologres:
                 return new HologresExprParser(sql, features);
             case redshift:
@@ -249,8 +237,6 @@ public class SQLParserUtils {
                 return new StarRocksExprParser(sql, features);
             case impala:
                 return new ImpalaExprParser(sql, features);
-            case doris:
-                return new DorisExprParser(sql, features);
             default:
                 return new SQLExprParser(sql, dbType, features);
         }
@@ -277,14 +263,11 @@ public class SQLParserUtils {
                 return lexer;
             }
             case h2:
-            case lealone:
                 return new H2Lexer(sql, features);
             case postgresql:
             case greenplum:
             case edb:
                 return new PGLexer(sql, features);
-            case gaussdb:
-                return new GaussDbLexer(sql, features);
             case hologres:
                 return new HologresLexer(sql, features);
             case redshift:
@@ -312,8 +295,6 @@ public class SQLParserUtils {
                 return new BigQueryLexer(sql, features);
             case impala:
                 return new ImpalaLexer(sql, features);
-            case doris:
-                return new DorisLexer(sql, features);
             default: {
                 Lexer lexer = new Lexer(sql, null, dbType);
                 for (SQLParserFeature feature : features) {

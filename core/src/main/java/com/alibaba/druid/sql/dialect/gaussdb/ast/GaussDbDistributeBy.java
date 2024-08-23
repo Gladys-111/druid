@@ -91,12 +91,7 @@ public class GaussDbDistributeBy extends GaussDbObjectImpl {
         if (v instanceof GaussDbASTVisitor) {
             GaussDbASTVisitor vv = (GaussDbASTVisitor) v;
             if (vv.visit(this)) {
-                acceptChild(v, this.columns);
                 acceptChild(v, this.distributions);
-                acceptChild(v, this.storeIn);
-                acceptChild(v, this.lifeCycle);
-                acceptChild(v, this.type);
-                acceptChild(v, this.subPartitionBy);
             }
         }
     }

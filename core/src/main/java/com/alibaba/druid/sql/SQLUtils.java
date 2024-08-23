@@ -25,7 +25,6 @@ import com.alibaba.druid.sql.dialect.clickhouse.visitor.CKOutputVisitor;
 import com.alibaba.druid.sql.dialect.clickhouse.visitor.CKStatVisitor;
 import com.alibaba.druid.sql.dialect.db2.visitor.DB2OutputVisitor;
 import com.alibaba.druid.sql.dialect.db2.visitor.DB2SchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.doris.visitor.DorisOutputVisitor;
 import com.alibaba.druid.sql.dialect.gaussdb.visitor.GaussDbOutputVisitor;
 import com.alibaba.druid.sql.dialect.h2.visitor.H2OutputVisitor;
 import com.alibaba.druid.sql.dialect.h2.visitor.H2SchemaStatVisitor;
@@ -60,7 +59,7 @@ import com.alibaba.druid.sql.dialect.oracle.visitor.OracleToMySqlOutputVisitor;
 import com.alibaba.druid.sql.dialect.oscar.visitor.OscarOutputVisitor;
 import com.alibaba.druid.sql.dialect.postgresql.visitor.PGOutputVisitor;
 import com.alibaba.druid.sql.dialect.postgresql.visitor.PGSchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.presto.visitor.PrestoOutputASTVisitor;
+import com.alibaba.druid.sql.dialect.presto.visitor.PrestoOutputVisitor;
 import com.alibaba.druid.sql.dialect.redshift.visitor.RedshiftOutputVisitor;
 import com.alibaba.druid.sql.dialect.spark.visitor.SparkOutputVisitor;
 import com.alibaba.druid.sql.dialect.spark.visitor.SparkSchemaStatVisitor;
@@ -528,10 +527,10 @@ public class SQLUtils {
             case greenplum:
             case edb:
                 return new PGOutputVisitor(out);
-            case gaussdb:
-                return new GaussDbOutputVisitor(out);
             case hologres:
                 return new HologresOutputVisitor(out);
+            case gaussdb:
+                return new GaussDbOutputVisitor(out);
             case redshift:
                 return new RedshiftOutputVisitor(out);
             case sqlserver:
@@ -542,7 +541,6 @@ public class SQLUtils {
             case odps:
                 return new OdpsOutputVisitor(out);
             case h2:
-            case lealone:
                 return new H2OutputVisitor(out);
             case informix:
                 return new InformixOutputVisitor(out);
@@ -554,7 +552,7 @@ public class SQLUtils {
                 return new SparkOutputVisitor(out);
             case presto:
             case trino:
-                return new PrestoOutputASTVisitor(out);
+                return new PrestoOutputVisitor(out);
             case clickhouse:
                 return new CKOutputVisitor(out);
             case oscar:
@@ -565,8 +563,6 @@ public class SQLUtils {
                 return new BigQueryOutputVisitor(out);
             case impala:
                 return new ImpalaOutputVisitor(out);
-            case doris:
-                return new DorisOutputVisitor(out);
             default:
                 return new SQLASTOutputVisitor(out, dbType);
         }
@@ -614,7 +610,6 @@ public class SQLUtils {
             case odps:
                 return new OdpsSchemaStatVisitor(repository);
             case h2:
-            case lealone:
                 return new H2SchemaStatVisitor(repository);
             case hive:
                 return new HiveSchemaStatVisitor(repository);

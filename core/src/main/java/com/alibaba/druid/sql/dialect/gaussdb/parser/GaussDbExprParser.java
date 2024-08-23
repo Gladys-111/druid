@@ -26,6 +26,8 @@ public class GaussDbExprParser extends PGExprParser {
     public GaussDbExprParser(GaussDbLexer lexer) {
         super(lexer);
         this.dbType = DbType.gaussdb;
+        this.aggregateFunctions = AGGREGATE_FUNCTIONS;
+        this.aggregateFunctionHashCodes = AGGREGATE_FUNCTIONS_CODES;
     }
 
     public SQLPartition parsePartition() {
@@ -48,7 +50,6 @@ public class GaussDbExprParser extends PGExprParser {
 
     public SQLPartitionValue parsePartitionValues(boolean isDistribute) {
         GaussDbPartitionValue values = null;
-        boolean isInterval = false;
         if (lexer.token() == Token.VALUES) {
             lexer.nextToken();
             if (lexer.token() == Token.IN) {
@@ -73,6 +74,13 @@ public class GaussDbExprParser extends PGExprParser {
                     this.exprList(values.getItems(), values);
                     accept(Token.RPAREN);
                 }
+                if (lexer.token() == Token.TABLESPACE) {
+                    lexer.nextToken();
+                    values.setSpaceName(this.expr());
+                } else if (lexer.identifierEquals(FnvHash.Constants.DATANODE)) {
+                    lexer.nextToken();
+                    values.setDataNodes(this.expr());
+                }
             } else if (lexer.token() == Token.LPAREN) {
                 values = new GaussDbPartitionValue(SQLPartitionValue.Operator.List);
                 lexer.nextToken();
@@ -90,29 +98,23 @@ public class GaussDbExprParser extends PGExprParser {
         } else if (lexer.token() == Token.START) {
             lexer.nextToken();
             values = new GaussDbPartitionValue(SQLPartitionValue.Operator.StartEndEvery);
-            isInterval = true;
             values.setStart(this.expr());
-        }
-        if (lexer.token() == Token.END) {
-            lexer.nextToken();
-            if (!isInterval) {
-                values = new GaussDbPartitionValue(SQLPartitionValue.Operator.StartEndEvery);
+            if (lexer.token() == Token.END) {
+                lexer.nextToken();
+                values.setEnd(this.expr());
             }
-            values.setEnd(this.expr());
             if (lexer.identifierEquals(FnvHash.Constants.EVERY)) {
                 lexer.nextToken();
-                if (!isInterval) {
-                    values = new GaussDbPartitionValue(SQLPartitionValue.Operator.StartEndEvery);
-                }
                 values.setEvery(this.expr());
             }
-        }
-        if (lexer.token() == Token.TABLESPACE) {
-            lexer.nextToken();
-            values.setSpaceName(this.expr());
-        } else if (lexer.identifierEquals(FnvHash.Constants.DATANODE)) {
-            lexer.nextToken();
-            values.setDataNodes(this.expr());
+            if (lexer.token() == Token.TABLESPACE) {
+                lexer.nextToken();
+                values.setSpaceName(this.expr());
+            }
+            else if (lexer.identifierEquals(FnvHash.Constants.DATANODE)) {
+                lexer.nextToken();
+                values.setDataNodes(this.expr());
+            }
         }
         if (values != null) {
             values.setDistribute(isDistribute);

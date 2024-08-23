@@ -11,9 +11,6 @@ public class GaussDbCreateTableStatement extends SQLCreateTableStatement impleme
     protected SQLExpr engine;
     protected GaussDbDistributeBy distributeBy;
     protected SQLPartitionBy partitionBy;
-    protected SQLExpr autoIncrement;
-    protected SQLExpr charset;
-    protected SQLExpr collate;
 
     public GaussDbCreateTableStatement() {
         super(DbType.gaussdb);
@@ -30,43 +27,7 @@ public class GaussDbCreateTableStatement extends SQLCreateTableStatement impleme
         return engine;
     }
 
-    public void setAutoIncrement(SQLExpr x) {
-        if (x != null) {
-            x.setParent(this);
-        }
-        this.autoIncrement = x;
-    }
-
-    public SQLExpr getAutoIncrement() {
-        return autoIncrement;
-    }
-
-    public void setCharset(SQLExpr x) {
-        if (x != null) {
-            x.setParent(this);
-        }
-        this.charset = x;
-    }
-
-    public SQLExpr getCharset() {
-        return charset;
-    }
-
-    public void setCollate(SQLExpr x) {
-        if (x != null) {
-            x.setParent(this);
-        }
-        this.collate = x;
-    }
-
-    public SQLExpr getCollate() {
-        return collate;
-    }
-
     public void setDistributeBy(GaussDbDistributeBy distributeBy) {
-        if (distributeBy != null) {
-            distributeBy.setParent(this);
-        }
         this.distributeBy = distributeBy;
     }
 
@@ -75,9 +36,6 @@ public class GaussDbCreateTableStatement extends SQLCreateTableStatement impleme
     }
 
     public void setPartitionBy(SQLPartitionBy partitionBy) {
-        if (partitionBy != null) {
-            partitionBy.setParent(this);
-        }
         this.partitionBy = partitionBy;
     }
 
@@ -88,9 +46,14 @@ public class GaussDbCreateTableStatement extends SQLCreateTableStatement impleme
     @Override
     public void accept0(SQLASTVisitor v) {
         if (v instanceof GaussDbASTVisitor) {
-            accept0((GaussDbASTVisitor) v);
+            GaussDbASTVisitor vv = (GaussDbASTVisitor) v;
+            if (vv.visit(this)) {
+                acceptChild(vv);
+            }
+            vv.endVisit(this);
             return;
         }
+
         if (v.visit(this)) {
             acceptChild(v);
         }
@@ -101,11 +64,6 @@ public class GaussDbCreateTableStatement extends SQLCreateTableStatement impleme
     public void accept0(GaussDbASTVisitor visitor) {
         if (visitor.visit(this)) {
             acceptChild(visitor, this.distributeBy);
-            acceptChild(visitor, this.engine);
-            acceptChild(visitor, this.partitionBy);
-            acceptChild(visitor, this.collate);
-            acceptChild(visitor, this.charset);
-            acceptChild(visitor, this.autoIncrement);
         }
     }
 }

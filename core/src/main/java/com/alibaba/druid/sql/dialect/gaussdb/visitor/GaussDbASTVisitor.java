@@ -8,11 +8,8 @@ public interface GaussDbASTVisitor extends SQLASTVisitor {
     default boolean visit(GaussDbCreateTableStatement x) {
         return true;
     }
-    default void endVisit(GaussDbCreateTableStatement x) {
-    }
     default boolean visit(GaussDbDistributeBy x) {
         return true;
     }
-    default void endVisit(GaussDbDistributeBy x) {
-    }
+
 }
