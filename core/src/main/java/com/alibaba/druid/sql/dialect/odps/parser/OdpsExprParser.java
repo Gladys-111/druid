@@ -16,6 +16,7 @@
 package com.alibaba.druid.sql.dialect.odps.parser;
 
 import com.alibaba.druid.DbType;
+import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLDataType;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLName;
@@ -817,5 +818,193 @@ public class OdpsExprParser extends HiveExprParser {
             }
         }
         return super.methodRest(expr, acceptLPAREN);
+    }
+
+    @Override
+    public SQLName name() {
+        String identName;
+        long hash = 0;
+        SQLObject locationHolder = null;
+        if (lexer.isKeepSourceLocation()) {
+            locationHolder = new SQLIdentifierExpr("temp");
+            lexer.computeRowAndColumn(locationHolder);
+        }
+        if (lexer.token() == Token.LITERAL_ALIAS) {
+            identName = lexer.stringVal();
+            lexer.nextToken();
+        } else if (lexer.token() == Token.IDENTIFIER) {
+            identName = lexer.stringVal();
+
+            char c0 = identName.charAt(0);
+            if (c0 != '[') {
+                hash = lexer.hashLCase();
+            }
+            lexer.nextToken();
+        } else if (lexer.token() == Token.LITERAL_CHARS) {
+            identName = '\'' + lexer.stringVal() + '\'';
+            lexer.nextToken();
+        } else if (lexer.token() == Token.VARIANT) {
+            identName = lexer.stringVal();
+            lexer.nextToken();
+        } else {
+            switch (lexer.token()) {
+                case MODE:
+                case ERRORS:
+                case NOWAIT:
+                case COMMIT:
+                case PCTFREE:
+                case INITRANS:
+                case MAXTRANS:
+                case SEGMENT:
+                case CREATION:
+                case IMMEDIATE:
+                case DEFERRED:
+                case STORAGE:
+                case NEXT:
+                case MINEXTENTS:
+                case MAXEXTENTS:
+                case MAXSIZE:
+                case PCTINCREASE:
+                case FLASH_CACHE:
+                case CELL_FLASH_CACHE:
+                case NONE:
+                case LOB:
+                case STORE:
+                case ROW:
+                case CHUNK:
+                case CACHE:
+                case NOCACHE:
+                case LOGGING:
+                case NOCOMPRESS:
+                case KEEP_DUPLICATES:
+                case EXCEPTIONS:
+                case PURGE:
+                case INITIALLY:
+                case END:
+                case COMMENT:
+                case ENABLE:
+                case DISABLE:
+                case SEQUENCE:
+                case USER:
+                case ANALYZE:
+                case OPTIMIZE:
+                case GRANT:
+                case REVOKE:
+                case BINARY:
+                case OVER:
+                case ORDER:
+                case DO:
+                case INNER:
+                case JOIN:
+                case TYPE:
+                case FUNCTION:
+                case KEY:
+                case UNIQUE:
+                case SCHEMA:
+                case INTERVAL:
+                case EXPLAIN:
+                case SET:
+                case TABLESPACE:
+                case PARTITION:
+                case CLOSE:
+                case INOUT:
+                case GOTO:
+                case DEFAULT:
+                case FULLTEXT:
+                case WITH:
+                case ANY:
+                case BEGIN:
+                case CAST:
+                case COMPUTE:
+                case ESCAPE:
+                case EXCEPT:
+                case FULL:
+                case INTERSECT:
+                case MERGE:
+                case MINUS:
+                case OPEN:
+                case SOME:
+                case TRUNCATE:
+                case UNTIL:
+                case VIEW:
+                case GROUP:
+                case INDEX:
+                case DESC:
+                case ALL:
+                case SHOW:
+                case FOR:
+                case LEAVE:
+                case REPEAT:
+                case LOOP:
+                case IS:
+                case LOCK:
+                case REFERENCES:
+                case EXCEPTION:
+                    identName = lexer.stringVal();
+                    lexer.nextToken();
+                    break;
+                case CONSTRAINT:
+                case CHECK:
+                case VALUES:
+                case IN:
+                case OUT:
+                case LIMIT:
+                case TRIGGER:
+                case USE:
+                case LIKE:
+                case DISTRIBUTE:
+                case DELETE:
+                case UPDATE:
+                case PROCEDURE:
+                case LEFT:
+                case RIGHT:
+                case TABLE:
+                case RLIKE:
+                case CREATE:
+                case PARTITIONED:
+                case UNION:
+                case PRIMARY:
+                case TO:
+                case DECLARE:
+                case AS:
+                case BY:
+                case EXISTS:
+                case FOREIGN:
+                case ALTER:
+                case ASC:
+                case NULL:
+                case CURSOR:
+                case FETCH:
+                case BITMAP:
+                case NGRAMBF:
+                case INVERTED:
+                case DATABASE:
+                    identName = nameCommon();
+                    break;
+                default:
+                    throw new ParserException("illegal name, " + lexer.info());
+            }
+        }
+
+        SQLName identifierExpr = null;
+        if (lexer.isEnabled(SQLParserFeature.IgnoreNameQuotes)) {
+            if (identName.indexOf('.') == -1) {
+                identName = SQLUtils.forcedNormalize(identName, dbType);
+                hash = 0;
+            } else {
+                identifierExpr = (SQLName) primaryIdentifierRest(hash, identName);
+            }
+        }
+
+        if (identifierExpr == null) {
+            identifierExpr = new SQLIdentifierExpr(identName, hash);
+        }
+        if (locationHolder != null) {
+            identifierExpr.setSource(locationHolder.getSourceLine(), locationHolder.getSourceColumn());
+        }
+
+        SQLName name = identifierExpr;
+        name = nameRest(name);
+        return name;
     }
 }

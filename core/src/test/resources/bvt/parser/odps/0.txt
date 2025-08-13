@@ -77,3 +77,28 @@ WITH t AS (
 	)
 SELECT abc
 FROM t
+------------------------------------------------------------------------------------------------------------------------
+--odps sql
+--********************************************************************--
+--author:dw_on_emr_qa3_testcloud_com
+--create time:2025-08-11 17:08:41
+--********************************************************************--
+
+CREATE TABLE IF NOT EXISTS partition_table1
+(
+    a  STRING COMMENT 'FIELD'
+    ,b STRING COMMENT 'FIELD'
+)
+COMMENT 'TABLE COMMENT'
+PARTITIONED BY (ds STRING COMMENT '分区')
+LIFECYCLE 70;
+--------------------
+CREATE TABLE IF NOT EXISTS partition_table1 (
+	a STRING COMMENT 'FIELD',
+	b STRING COMMENT 'FIELD'
+)
+COMMENT 'TABLE COMMENT'
+PARTITIONED BY (
+	ds STRING COMMENT '分区'
+)
+LIFECYCLE 70;
